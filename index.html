@@ -565,7 +565,7 @@ const PALETTE_HEX = [
 
 const TABS = [
   { id:'t1',       label:'Tier 1',                 badge:'T1',  type:'multi', sections:['Maths','Reasoning','GK','English'],               maxPerSec:50,  total:200, hasSections:true,  hasPercentile:true  },
-  { id:'t2',       label:'Tier 2',                 badge:'T2',  type:'multi', sections:['Maths','Reasoning','English','GK','Computer'],     maxPerSec:[90,90,135,75,60], total:450, hasSections:true, hasPercentile:true },
+  { id:'t2',       label:'Tier 2',                 badge:'T2',  type:'multi', sections:['Maths','Reasoning','English','GK','Computer'],     maxPerSec:[90,90,135,75,60], total:390, hasSections:true, hasPercentile:true, excludeFromTotal:['Computer'] },
   { id:'t1_maths', label:'T1 Maths Sec',           badge:'SEC', type:'single',subject:'Maths',    max:50  },
   { id:'t1_eng',   label:'T1 English Sec',         badge:'SEC', type:'single',subject:'English',  max:50  },
   { id:'t1_gk',    label:'T1 GK Sec',              badge:'SEC', type:'single',subject:'GK',       max:50  },
@@ -690,6 +690,14 @@ function getMaxForSection(tab, sec) {
   return tab.maxPerSec || 50;
 }
 
+function getMaxTotal(tab) {
+  const excluded = tab.excludeFromTotal || [];
+  if (Array.isArray(tab.maxPerSec)) {
+    return tab.sections.reduce((sum, sec, i) => excluded.includes(sec) ? sum : sum + tab.maxPerSec[i], 0);
+  }
+  return tab.sections.filter(s => !excluded.includes(s)).length * tab.maxPerSec;
+}
+
 function renderMultiTab(tid, tab) {
   const data = appData[tid];
   let html = '';
@@ -716,14 +724,17 @@ function renderMultiTab(tid, tab) {
   html += renderStatsRow(tid, tab);
 
   // Table
+  const excluded = tab.excludeFromTotal || [];
+  const maxTotal = getMaxTotal(tab);
   html += `<div class="table-wrap"><table><thead><tr>
     <th class="center">#</th>
     <th class="center">Test<br>No.</th>`;
   tab.sections.forEach(sec => {
     const max = getMaxForSection(tab, sec);
-    html += `<th class="center">${sec}<br><span class="max-label">/${max}</span></th>`;
+    const isExcl = excluded.includes(sec);
+    html += `<th class="center">${sec}${isExcl?'<br><span class="max-label" style="color:#f59e0b">not in total</span>':''}<br><span class="max-label">/${max}</span></th>`;
   });
-  html += `<th class="center">Total<br><span class="max-label">/${tab.total||tab.sections.reduce((a,s)=>a+getMaxForSection(tab,s),0)}</span></th>
+  html += `<th class="center">Total<br><span class="max-label">/${maxTotal}</span></th>
     <th class="center">Percentile</th>
     <th>Remarks</th>
     <th class="center">Del</th>
@@ -738,15 +749,15 @@ function renderMultiTab(tid, tab) {
 
 function renderMultiRow(tid, tab, row, i) {
   const data = appData[tid];
+  const excluded = tab.excludeFromTotal || [];
   let total = 0; let hasScore = false;
   tab.sections.forEach(sec => {
+    if (excluded.includes(sec)) return;
     const v = parseFloat(row.scores[sec]);
     if (!isNaN(v)) { total += v; hasScore = true; }
   });
 
-  const maxTotal = Array.isArray(tab.maxPerSec)
-    ? tab.maxPerSec.reduce((a,b)=>a+b,0)
-    : tab.sections.length * tab.maxPerSec;
+  const maxTotal = getMaxTotal(tab);
 
   const pct = hasScore ? (total / maxTotal * 100) : null;
   let totalClass = '';
@@ -769,7 +780,8 @@ function renderMultiRow(tid, tab, row, i) {
     const dl = parseFloat(data.deadlines[sec]);
     const scoreNum = parseFloat(v);
     const belowDl = !isNaN(dl) && !isNaN(scoreNum) && scoreNum < dl;
-    html += `<td class="score-cell"><input class="score-input${belowDl?' score-below-deadline':''}" type="number" min="0" max="${max}" step="0.25" value="${v}" data-row="${row.id}" data-sec="${sec}" data-max="${max}"></td>`;
+    const isExcl = excluded.includes(sec);
+    html += `<td class="score-cell" style="${isExcl?'opacity:0.75':''}"><input class="score-input${belowDl?' score-below-deadline':''}" type="number" min="0" max="${max}" step="0.25" value="${v}" data-row="${row.id}" data-sec="${sec}" data-max="${max}"></td>`;
   });
 
   html += `<td class="total-cell ${totalClass}">${hasScore ? total.toFixed(2) : '—'}</td>`;
@@ -843,18 +855,20 @@ function renderSingleRow(tid, tab, row, i) {
 
 function renderStatsRow(tid, tab) {
   const data = appData[tid];
+  const excluded = tab.excludeFromTotal || [];
   const rows = data.rows.filter(r => {
-    return tab.sections.some(s => r.scores[s] !== '' && !isNaN(parseFloat(r.scores[s])));
+    return tab.sections.some(s => !excluded.includes(s) && r.scores[s] !== '' && !isNaN(parseFloat(r.scores[s])));
   });
   if (!rows.length) return '';
 
-  const maxTotal = Array.isArray(tab.maxPerSec)
-    ? tab.maxPerSec.reduce((a,b)=>a+b,0)
-    : tab.sections.length * tab.maxPerSec;
+  const maxTotal = getMaxTotal(tab);
 
   const totals = rows.map(r => {
     let t=0;
-    tab.sections.forEach(s => { const v=parseFloat(r.scores[s]); if(!isNaN(v)) t+=v; });
+    tab.sections.forEach(s => {
+      if (excluded.includes(s)) return;
+      const v=parseFloat(r.scores[s]); if(!isNaN(v)) t+=v;
+    });
     return t;
   });
 
@@ -888,6 +902,7 @@ function renderStatsRowSingle(tid, tab) {
 
 function renderWeaknessDetector(tid, tab) {
   const data = appData[tid];
+  const excluded = tab.excludeFromTotal || [];
   let subjects = [];
 
   if (tab.type === 'multi') {
@@ -896,13 +911,13 @@ function renderWeaknessDetector(tid, tab) {
       const scores = data.rows.map(r=>parseFloat(r.scores[sec])).filter(v=>!isNaN(v));
       const avg = scores.length ? scores.reduce((a,b)=>a+b,0)/scores.length : null;
       const pct = avg !== null ? avg/max*100 : null;
-      return { sec, max, avg, pct };
+      return { sec, max, avg, pct, excl: excluded.includes(sec) };
     });
   } else {
     const scores = data.rows.map(r=>parseFloat(r.scores['score'])).filter(v=>!isNaN(v));
     const avg = scores.length ? scores.reduce((a,b)=>a+b,0)/scores.length : null;
     const pct = avg !== null ? avg/tab.max*100 : null;
-    subjects = [{ sec: tab.subject, max: tab.max, avg, pct }];
+    subjects = [{ sec: tab.subject, max: tab.max, avg, pct, excl: false }];
   }
 
   const valid = subjects.filter(s=>s.pct!==null);
@@ -914,8 +929,9 @@ function renderWeaknessDetector(tid, tab) {
     const level = s.pct >= 70 ? 'ok' : s.pct >= 50 ? 'warning' : 'danger';
     const icon = level==='ok'?'✅':level==='warning'?'⚠️':'🚨';
     const barColor = level==='ok'?'#22c55e':level==='warning'?'#f59e0b':'#ef4444';
+    const exclNote = s.excl ? `<span style="font-size:10px;color:#f59e0b;font-weight:500;margin-left:4px">(not in total)</span>` : '';
     html += `<div class="weakness-card ${level}">
-      <div class="wc-subject">${icon} ${s.sec}</div>
+      <div class="wc-subject">${icon} ${s.sec}${exclNote}</div>
       <div class="wc-bar-bg"><div class="wc-bar" style="width:${Math.min(s.pct,100).toFixed(1)}%;background:${barColor}"></div></div>
       <div class="wc-stats">
         <span>Avg: ${s.avg.toFixed(1)}/${s.max}</span>
@@ -941,15 +957,16 @@ function updateScoreInputStyle(inp, tid, tab) {
 function updateRowTotal(trEl, tid, tab, row) {
   const totalTd = trEl.querySelector('.total-cell');
   if (!totalTd) return;
+  const excluded = tab.excludeFromTotal || [];
   let total = 0, has = false;
-  const maxTotal = Array.isArray(tab.maxPerSec)
-    ? tab.maxPerSec.reduce((a,b)=>a+b,0)
-    : tab.sections.length * tab.maxPerSec;
-  (tab.sections || ['score']).forEach(sec => {
-    const v = parseFloat(row.scores[sec]);
-    if (!isNaN(v)) { total += v; has = true; }
-  });
-  if (tab.type === 'single') {
+  const maxTotal = getMaxTotal(tab);
+  if (tab.type === 'multi') {
+    tab.sections.forEach(sec => {
+      if (excluded.includes(sec)) return;
+      const v = parseFloat(row.scores[sec]);
+      if (!isNaN(v)) { total += v; has = true; }
+    });
+  } else {
     const v = parseFloat(row.scores['score']);
     if (!isNaN(v)) { total = v; has = true; }
   }
