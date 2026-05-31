@@ -580,15 +580,37 @@ const TABS = [
 let appData = {};
 let activePaletteTarget = null;
 
-function loadData() {
+const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const API_BASE = isLocal ? 'http://localhost:3000/api/data' : 'https://YOUR_RENDER_APP_NAME.onrender.com/api/data';
+
+async function loadData() {
   try {
-    const saved = localStorage.getItem('mta_data_v2');
-    if (saved) appData = JSON.parse(saved);
-  } catch(e) {}
+    const res = await fetch(API_BASE);
+    if (res.ok) {
+      const data = await res.json();
+      if (data && Object.keys(data).length > 0) {
+        appData = data;
+      }
+    }
+  } catch(e) {
+    console.error('Failed to load from MongoDB', e);
+  }
 }
 
-function saveData() {
-  try { localStorage.setItem('mta_data_v2', JSON.stringify(appData)); } catch(e){}
+let saveTimer = null;
+async function saveData() {
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    try {
+      await fetch(API_BASE, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(appData)
+      });
+    } catch(e) {
+      console.error('Failed to save to MongoDB', e);
+    }
+  }, 1000);
 }
 
 function ensureTab(tid) {
@@ -1008,6 +1030,12 @@ function bindEvents(tid, tab) {
   // Score inputs — update data + style only, NO full re-render
   panel.querySelectorAll('.score-input[data-row]').forEach(inp => {
     inp.addEventListener('input', () => {
+      let val = parseFloat(inp.value);
+      const max = parseFloat(inp.dataset.max);
+      if (!isNaN(val) && !isNaN(max) && val > max) {
+        inp.value = max;
+      }
+
       const rowId = inp.dataset.row;
       const sec = inp.dataset.sec;
       const row = appData[tid].rows.find(r=>String(r.id)===String(rowId));
@@ -1145,8 +1173,11 @@ document.addEventListener('click', (e) => {
 });
 
 // ---- INIT ----
-loadData();
-renderAllTabs();
+async function init() {
+  await loadData();
+  renderAllTabs();
+}
+init();
 </script>
 </body>
 </html>
