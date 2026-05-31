@@ -581,7 +581,7 @@ let appData = {};
 let activePaletteTarget = null;
 
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const API_BASE = isLocal ? 'http://localhost:3000/api/data' : 'https://YOUR_RENDER_APP_NAME.onrender.com/api/data';
+const API_BASE = isLocal ? 'http://localhost:3000/api/data' : 'https://mock-test-analyzer-backend.onrender.com/api/data';
 
 async function loadData() {
   try {
