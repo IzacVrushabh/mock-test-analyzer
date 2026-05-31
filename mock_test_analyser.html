@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mock Test Analyser</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e1117;
+    --bg2: #161b27;
+    --bg3: #1e2535;
+    --bg4: #252d3d;
+    --border: #2e3a52;
+    --border2: #3a4a6a;
+    --text: #e8edf5;
+    --text2: #9aabcc;
+    --text3: #6070a0;
+    --accent: #4f8ef7;
+    --accent2: #3b6fd4;
+    --green: #22c55e;
+    --red: #ef4444;
+    --amber: #f59e0b;
+    --green-bg: #052e16;
+    --red-bg: #450a0a;
+    --amber-bg: #451a00;
+    --green-text: #4ade80;
+    --red-text: #f87171;
+    --amber-text: #fbbf24;
+    --radius: 10px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.4);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Space Grotesk', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+  }
+
+  /* HEADER */
+  .header {
+    background: linear-gradient(135deg, #0e1117 0%, #1a2340 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 1.2rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-icon {
+    width: 42px; height: 42px;
+    background: linear-gradient(135deg, var(--accent), #8b5cf6);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+  .header h1 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    background: linear-gradient(90deg, #e8edf5, #4f8ef7);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .header p {
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 2px;
+  }
+
+  /* TAB NAVIGATION */
+  .tab-nav-wrapper {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .tab-nav-wrapper::-webkit-scrollbar { display: none; }
+  .tab-nav {
+    display: flex;
+    min-width: max-content;
+    padding: 0 1rem;
+    gap: 2px;
+  }
+  .tab-btn {
+    padding: 0.8rem 1rem;
+    background: none;
+    border: none;
+    color: var(--text3);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    position: relative;
+  }
+  .tab-btn:hover { color: var(--text2); }
+  .tab-btn.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+  .tab-badge {
+    display: inline-block;
+    font-size: 10px;
+    padding: 1px 5px;
+    border-radius: 4px;
+    margin-left: 4px;
+    font-weight: 600;
+  }
+  .badge-t1 { background: #1a2f5a; color: #7eb3ff; }
+  .badge-t2 { background: #2a1a4a; color: #c084fc; }
+  .badge-sec { background: #1a3a2a; color: #4ade80; }
+
+  /* MAIN CONTENT */
+  .main { padding: 1.5rem; max-width: 1400px; margin: 0 auto; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* SECTION HEADERS */
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 1.2rem;
+  }
+  .section-title h2 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .section-title .tag {
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* DEADLINE SECTION */
+  .deadline-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 1.2rem;
+    margin-bottom: 1.5rem;
+  }
+  .deadline-card h3 {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text3);
+    margin-bottom: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .deadline-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 10px;
+  }
+  .deadline-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .deadline-item label {
+    font-size: 11px;
+    color: var(--text3);
+    font-weight: 500;
+  }
+  .deadline-item input {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 10px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .deadline-item input:focus { border-color: var(--accent); }
+
+  /* TABLE */
+  .table-wrap {
+    overflow-x: auto;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    margin-bottom: 1.5rem;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 600px;
+  }
+  thead tr {
+    background: var(--bg3);
+    border-bottom: 1px solid var(--border);
+  }
+  th {
+    padding: 10px 12px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--text3);
+    white-space: nowrap;
+  }
+  th.center { text-align: center; }
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--bg2); }
+  td {
+    padding: 8px 12px;
+    vertical-align: middle;
+  }
+  .row-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text3);
+    width: 40px;
+    text-align: center;
+  }
+  .score-input {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 5px 8px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    width: 68px;
+    text-align: center;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .score-input:focus { border-color: var(--accent); }
+  .score-cell { text-align: center; }
+
+  /* Score coloring */
+  .score-below-deadline { background: rgba(239,68,68,0.15) !important; border-color: #ef4444 !important; }
+  .total-good { color: var(--green-text); font-weight: 600; }
+  .total-bad { color: var(--red-text); font-weight: 600; }
+  .total-cell {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    text-align: center;
+    font-weight: 600;
+  }
+
+  /* Percentile */
+  .percentile-input {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 5px 8px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    width: 72px;
+    text-align: center;
+    outline: none;
+  }
+  .percentile-input:focus { border-color: var(--accent); }
+  .percentile-good { background: rgba(34,197,94,0.15) !important; border-color: #22c55e !important; color: var(--green-text); }
+  .percentile-bad { background: rgba(239,68,68,0.15) !important; border-color: #ef4444 !important; color: var(--red-text); }
+
+  /* Remarks */
+  .remark-cell { min-width: 130px; }
+  .remark-input {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 5px 8px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 12px;
+    width: 100%;
+    outline: none;
+    resize: none;
+    min-height: 32px;
+  }
+  .remark-input:focus { border-color: var(--accent); }
+  .remark-color-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px; height: 20px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    margin-left: 4px;
+    font-size: 10px;
+    flex-shrink: 0;
+  }
+  .remark-cell-wrap {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  /* Max marks label */
+  .max-label {
+    font-size: 10px;
+    color: var(--text3);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* WEAKNESS DETECTOR */
+  .weakness-section {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.2rem;
+    margin-bottom: 1.5rem;
+  }
+  .weakness-section h3 {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text3);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .weakness-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+  }
+  .weakness-card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+  .weakness-card.danger { border-color: #ef4444; background: rgba(239,68,68,0.07); }
+  .weakness-card.warning { border-color: #f59e0b; background: rgba(245,158,11,0.07); }
+  .weakness-card.ok { border-color: #22c55e; background: rgba(34,197,94,0.07); }
+  .weakness-card .wc-subject {
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .weakness-card.danger .wc-subject { color: var(--red-text); }
+  .weakness-card.warning .wc-subject { color: var(--amber-text); }
+  .weakness-card.ok .wc-subject { color: var(--green-text); }
+  .wc-bar-bg {
+    height: 6px;
+    background: var(--bg4);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 4px;
+  }
+  .wc-bar {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.5s;
+  }
+  .wc-stats {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--text3);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Stats row */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 10px;
+    margin-bottom: 1.5rem;
+  }
+  .stat-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+  .stat-card .sc-label {
+    font-size: 10px;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .stat-card .sc-val {
+    font-size: 1.3rem;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Color pickers for rows */
+  .color-dot {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+    cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.2);
+  }
+  .color-picker-row {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+  }
+
+  /* Percentile threshold */
+  .percentile-threshold {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--text3);
+  }
+  .percentile-threshold input[type=number] {
+    width: 60px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 8px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    outline: none;
+  }
+
+  /* Add row btn */
+  .add-row-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: 1px dashed var(--border2);
+    border-radius: 8px;
+    color: var(--text3);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 12px;
+    padding: 8px 14px;
+    transition: all 0.2s;
+    margin-bottom: 1.5rem;
+    font-weight: 500;
+  }
+  .add-row-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* Delete row */
+  .del-btn {
+    background: none;
+    border: none;
+    color: var(--text3);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 3px;
+    border-radius: 4px;
+    transition: all 0.15s;
+    line-height: 1;
+  }
+  .del-btn:hover { color: var(--red-text); background: rgba(239,68,68,0.1); }
+
+  /* Section for single-subject tests */
+  .single-subject-wrap {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+  }
+
+  /* Color palette popup */
+  .color-palette {
+    display: none;
+    position: fixed;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    padding: 8px;
+    z-index: 1000;
+    gap: 6px;
+    flex-wrap: wrap;
+    width: 140px;
+    box-shadow: var(--shadow);
+  }
+  .color-palette.show { display: flex; }
+  .palette-color {
+    width: 20px; height: 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.1);
+    transition: transform 0.1s;
+  }
+  .palette-color:hover { transform: scale(1.2); }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    .main { padding: 1rem 0.8rem; }
+    .header { padding: 1rem; }
+    .header h1 { font-size: 1.1rem; }
+    .deadline-grid { grid-template-columns: 1fr 1fr; }
+    .stats-row { grid-template-columns: 1fr 1fr; }
+    .weakness-grid { grid-template-columns: 1fr; }
+    th, td { padding: 7px 8px; }
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg2); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-icon">📊</div>
+  <div>
+    <h1>Mock Test Analyser</h1>
+    <p>Track • Analyse • Improve — SSC CGL Prep</p>
+  </div>
+</div>
+
+<div class="tab-nav-wrapper">
+  <div class="tab-nav" id="tabNav"></div>
+</div>
+
+<div class="main" id="mainContent"></div>
+
+<!-- Color Palette Popup -->
+<div class="color-palette" id="colorPalette"></div>
+
+<script>
+const COLORS = [
+  'transparent','#1a3a2a','#2a1a1a','#1a2a3a','#2a2a1a',
+  '#0d2137','#1c0d37','#37200d','#0d371c','#37160d',
+  '#22c55e22','#ef444422','#f59e0b22','#4f8ef722','#a855f722',
+  '#15803d44','#b91c1c44','#d9770644','#1d4ed844','#7c3aed44'
+];
+const PALETTE_HEX = [
+  '#0d1f0d','#1f0d0d','#0d0d1f','#1f1a0d','#0d1f1f',
+  '#1a4a2a','#4a1a1a','#1a1a4a','#3a2a0a','#0a2a3a',
+  '#22c55e33','#ef444433','#f59e0b33','#4f8ef733','#a855f733',
+  '#15803d55','#b91c1c55','#1d4ed855','#7c3aed55','transparent'
+];
+
+const TABS = [
+  { id:'t1',       label:'Tier 1',                 badge:'T1',  type:'multi', sections:['Maths','Reasoning','GK','English'],               maxPerSec:50,  total:200, hasSections:true,  hasPercentile:true  },
+  { id:'t2',       label:'Tier 2',                 badge:'T2',  type:'multi', sections:['Maths','Reasoning','English','GK','Computer'],     maxPerSec:[90,90,135,75,60], total:450, hasSections:true, hasPercentile:true },
+  { id:'t1_maths', label:'T1 Maths Sec',           badge:'SEC', type:'single',subject:'Maths',    max:50  },
+  { id:'t1_eng',   label:'T1 English Sec',         badge:'SEC', type:'single',subject:'English',  max:50  },
+  { id:'t1_gk',    label:'T1 GK Sec',              badge:'SEC', type:'single',subject:'GK',       max:50  },
+  { id:'t1_reas',  label:'T1 Reasoning Sec',       badge:'SEC', type:'single',subject:'Reasoning',max:50  },
+  { id:'t2_maths', label:'T2 Maths Sec',           badge:'SEC', type:'single',subject:'Maths',    max:90  },
+  { id:'t2_reas',  label:'T2 Reasoning Sec',       badge:'SEC', type:'single',subject:'Reasoning',max:90  },
+  { id:'t2_eng',   label:'T2 English Sec',         badge:'SEC', type:'single',subject:'English',  max:135 },
+  { id:'t2_gk',    label:'T2 GK Sec',              badge:'SEC', type:'single',subject:'GK',       max:75  },
+  { id:'t2_comp',  label:'Computer Sec',           badge:'SEC', type:'single',subject:'Computer', max:60  },
+];
+
+let appData = {};
+let activePaletteTarget = null;
+
+function loadData() {
+  try {
+    const saved = localStorage.getItem('mta_data_v2');
+    if (saved) appData = JSON.parse(saved);
+  } catch(e) {}
+}
+
+function saveData() {
+  try { localStorage.setItem('mta_data_v2', JSON.stringify(appData)); } catch(e){}
+}
+
+function ensureTab(tid) {
+  if (!appData[tid]) appData[tid] = { rows:[], deadlines:{}, pThreshold:90 };
+  if (!appData[tid].rows) appData[tid].rows = [];
+  if (!appData[tid].deadlines) appData[tid].deadlines = {};
+  if (appData[tid].pThreshold === undefined) appData[tid].pThreshold = 90;
+}
+
+function ensureRows(tid, tab) {
+  if (appData[tid].rows.length === 0) {
+    if (tab.type === 'multi') {
+      for (let i=0;i<5;i++) addRowData(tid, tab);
+    } else {
+      for (let i=0;i<5;i++) addRowData(tid, tab);
+    }
+  }
+}
+
+function addRowData(tid, tab) {
+  const row = { id: Date.now()+Math.random(), scores:{}, percentile:'', remark:'', remarkBg:'transparent', rowBg:'transparent' };
+  if (tab.type === 'multi') {
+    tab.sections.forEach(s => row.scores[s] = '');
+  } else {
+    row.scores['score'] = '';
+  }
+  appData[tid].rows.push(row);
+  saveData();
+}
+
+function deleteRow(tid, rowId) {
+  appData[tid].rows = appData[tid].rows.filter(r => r.id !== rowId);
+  saveData();
+  renderTab(tid);
+}
+
+// ---- RENDER ----
+
+function renderAllTabs() {
+  const nav = document.getElementById('tabNav');
+  nav.innerHTML = '';
+  TABS.forEach((t,i) => {
+    const btn = document.createElement('button');
+    btn.className = 'tab-btn' + (i===0?' active':'');
+    btn.dataset.tid = t.id;
+    btn.innerHTML = t.label + `<span class="tab-badge badge-${t.badge==='T1'?'t1':t.badge==='T2'?'t2':'sec'}">${t.badge}</span>`;
+    btn.onclick = () => switchTab(t.id);
+    nav.appendChild(btn);
+  });
+
+  const main = document.getElementById('mainContent');
+  main.innerHTML = '';
+  TABS.forEach((t,i) => {
+    ensureTab(t.id);
+    ensureRows(t.id, t);
+    const panel = document.createElement('div');
+    panel.className = 'tab-panel' + (i===0?' active':'');
+    panel.id = 'panel_'+t.id;
+    main.appendChild(panel);
+    renderTab(t.id);
+  });
+}
+
+function switchTab(tid) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tid===tid));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id==='panel_'+tid));
+}
+
+function renderTab(tid) {
+  const tab = TABS.find(t=>t.id===tid);
+  const panel = document.getElementById('panel_'+tid);
+  if (!panel) return;
+  ensureTab(tid);
+
+  let html = '';
+
+  // Section title
+  const tagClass = tab.badge==='T1'?'badge-t1':tab.badge==='T2'?'badge-t2':'badge-sec';
+  const colorMap = {'T1':'#1a4a8a','T2':'#4a1a8a','SEC':'#1a4a3a'};
+  const textMap = {'T1':'#7eb3ff','T2':'#c084fc','SEC':'#4ade80'};
+  html += `<div class="section-title"><h2>${tab.label}</h2><span class="tag" style="background:${colorMap[tab.badge]};color:${textMap[tab.badge]}">${tab.badge}</span></div>`;
+
+  if (tab.type==='multi') {
+    html += renderMultiTab(tid, tab);
+  } else {
+    html += renderSingleTab(tid, tab);
+  }
+
+  html += renderWeaknessDetector(tid, tab);
+
+  panel.innerHTML = html;
+  bindEvents(tid, tab);
+}
+
+function getMaxForSection(tab, sec) {
+  if (Array.isArray(tab.maxPerSec)) {
+    return tab.maxPerSec[tab.sections.indexOf(sec)] || 50;
+  }
+  return tab.maxPerSec || 50;
+}
+
+function renderMultiTab(tid, tab) {
+  const data = appData[tid];
+  let html = '';
+
+  // Deadline settings
+  html += `<div class="deadline-card"><h3>⚡ Section Deadlines (Min. Marks)</h3><div class="deadline-grid">`;
+  tab.sections.forEach(sec => {
+    const max = getMaxForSection(tab, sec);
+    const val = data.deadlines[sec] || '';
+    html += `<div class="deadline-item">
+      <label>${sec} <span class="max-label">/ ${max}</span></label>
+      <input type="number" min="0" max="${max}" value="${val}" data-deadline="${sec}" placeholder="0">
+    </div>`;
+  });
+  html += `</div>
+    <div class="percentile-threshold">
+      <span>Percentile good/bad threshold:</span>
+      <input type="number" min="0" max="100" value="${data.pThreshold||90}" data-pthr="1" style="width:60px">
+      <span style="color:var(--green-text)">≥ good</span>
+    </div>
+  </div>`;
+
+  // Stats
+  html += renderStatsRow(tid, tab);
+
+  // Table
+  html += `<div class="table-wrap"><table><thead><tr>
+    <th class="center">#</th>
+    <th class="center">Test<br>No.</th>`;
+  tab.sections.forEach(sec => {
+    const max = getMaxForSection(tab, sec);
+    html += `<th class="center">${sec}<br><span class="max-label">/${max}</span></th>`;
+  });
+  html += `<th class="center">Total<br><span class="max-label">/${tab.total||tab.sections.reduce((a,s)=>a+getMaxForSection(tab,s),0)}</span></th>
+    <th class="center">Percentile</th>
+    <th>Remarks</th>
+    <th class="center">Del</th>
+  </tr></thead><tbody id="tbody_${tid}">`;
+
+  data.rows.forEach((row,i) => html += renderMultiRow(tid, tab, row, i));
+  html += `</tbody></table></div>`;
+
+  html += `<button class="add-row-btn" data-addrow="${tid}">＋ Add Mock Test Row</button>`;
+  return html;
+}
+
+function renderMultiRow(tid, tab, row, i) {
+  const data = appData[tid];
+  let total = 0; let hasScore = false;
+  tab.sections.forEach(sec => {
+    const v = parseFloat(row.scores[sec]);
+    if (!isNaN(v)) { total += v; hasScore = true; }
+  });
+
+  const maxTotal = Array.isArray(tab.maxPerSec)
+    ? tab.maxPerSec.reduce((a,b)=>a+b,0)
+    : tab.sections.length * tab.maxPerSec;
+
+  const pct = hasScore ? (total / maxTotal * 100) : null;
+  let totalClass = '';
+  if (hasScore) {
+    totalClass = pct >= 60 ? 'total-good' : 'total-bad';
+  }
+
+  const pthr = data.pThreshold || 90;
+  const pVal = parseFloat(row.percentile);
+  let pClass = '';
+  if (!isNaN(pVal)) { pClass = pVal >= pthr ? 'percentile-good' : 'percentile-bad'; }
+
+  let html = `<tr style="background:${row.rowBg||'transparent'}">
+    <td class="row-num">${i+1}</td>
+    <td class="score-cell"><input class="score-input" style="width:50px" type="text" value="${i+1}" readonly></td>`;
+
+  tab.sections.forEach(sec => {
+    const max = getMaxForSection(tab, sec);
+    const v = row.scores[sec] ?? '';
+    const dl = parseFloat(data.deadlines[sec]);
+    const scoreNum = parseFloat(v);
+    const belowDl = !isNaN(dl) && !isNaN(scoreNum) && scoreNum < dl;
+    html += `<td class="score-cell"><input class="score-input${belowDl?' score-below-deadline':''}" type="number" min="0" max="${max}" step="0.25" value="${v}" data-row="${row.id}" data-sec="${sec}" data-max="${max}"></td>`;
+  });
+
+  html += `<td class="total-cell ${totalClass}">${hasScore ? total.toFixed(2) : '—'}</td>`;
+  html += `<td class="score-cell"><input class="percentile-input ${pClass}" type="number" min="0" max="100" step="0.01" value="${row.percentile}" data-row="${row.id}" data-field="percentile" placeholder="99.9"></td>`;
+  html += `<td class="remark-cell"><div class="remark-cell-wrap">
+    <textarea class="remark-input" style="background:${row.remarkBg||'transparent'}" data-row="${row.id}" data-field="remark" rows="1" placeholder="Add remark...">${row.remark||''}</textarea>
+    <button class="remark-color-btn" style="background:#3a4a6a;color:#aabbdd" data-colorpick="remark" data-row="${row.id}" title="Pick colour">🎨</button>
+  </div></td>`;
+  html += `<td class="score-cell"><button class="del-btn" data-delrow="${row.id}" data-tid="${tid}">✕</button></td>`;
+  html += `</tr>`;
+  return html;
+}
+
+function renderSingleTab(tid, tab) {
+  const data = appData[tid];
+  let html = '';
+
+  html += `<div class="deadline-card"><h3>⚡ Settings</h3>
+    <div class="deadline-grid">
+      <div class="deadline-item">
+        <label>Min. Marks <span class="max-label">/ ${tab.max}</span></label>
+        <input type="number" min="0" max="${tab.max}" value="${data.deadlines['score']||''}" data-deadline="score" placeholder="0">
+      </div>
+    </div>
+    <div class="percentile-threshold">
+      <span>Percentile good/bad threshold:</span>
+      <input type="number" min="0" max="100" value="${data.pThreshold||90}" data-pthr="1">
+      <span style="color:var(--green-text)">≥ good</span>
+    </div>
+  </div>`;
+
+  html += renderStatsRowSingle(tid, tab);
+
+  html += `<div class="table-wrap"><table><thead><tr>
+    <th class="center">#</th>
+    <th class="center">${tab.subject}<br><span class="max-label">/${tab.max}</span></th>
+    <th class="center">Percentile</th>
+    <th>Remarks</th>
+    <th class="center">Del</th>
+  </tr></thead><tbody id="tbody_${tid}">`;
+
+  data.rows.forEach((row,i) => html += renderSingleRow(tid, tab, row, i));
+  html += `</tbody></table></div>`;
+  html += `<button class="add-row-btn" data-addrow="${tid}">＋ Add Test Row</button>`;
+  return html;
+}
+
+function renderSingleRow(tid, tab, row, i) {
+  const data = appData[tid];
+  const v = row.scores['score'] ?? '';
+  const dl = parseFloat(data.deadlines['score']);
+  const scoreNum = parseFloat(v);
+  const belowDl = !isNaN(dl) && !isNaN(scoreNum) && scoreNum < dl;
+
+  const pthr = data.pThreshold || 90;
+  const pVal = parseFloat(row.percentile);
+  let pClass = '';
+  if (!isNaN(pVal)) { pClass = pVal >= pthr ? 'percentile-good' : 'percentile-bad'; }
+
+  return `<tr style="background:${row.rowBg||'transparent'}">
+    <td class="row-num">${i+1}</td>
+    <td class="score-cell"><input class="score-input${belowDl?' score-below-deadline':''}" type="number" min="0" max="${tab.max}" step="0.25" value="${v}" data-row="${row.id}" data-sec="score" data-max="${tab.max}"></td>
+    <td class="score-cell"><input class="percentile-input ${pClass}" type="number" min="0" max="100" step="0.01" value="${row.percentile}" data-row="${row.id}" data-field="percentile" placeholder="99.9"></td>
+    <td class="remark-cell"><div class="remark-cell-wrap">
+      <textarea class="remark-input" style="background:${row.remarkBg||'transparent'}" data-row="${row.id}" data-field="remark" rows="1" placeholder="Add remark...">${row.remark||''}</textarea>
+      <button class="remark-color-btn" style="background:#3a4a6a;color:#aabbdd" data-colorpick="remark" data-row="${row.id}" title="Pick colour">🎨</button>
+    </div></td>
+    <td class="score-cell"><button class="del-btn" data-delrow="${row.id}" data-tid="${tid}">✕</button></td>
+  </tr>`;
+}
+
+function renderStatsRow(tid, tab) {
+  const data = appData[tid];
+  const rows = data.rows.filter(r => {
+    return tab.sections.some(s => r.scores[s] !== '' && !isNaN(parseFloat(r.scores[s])));
+  });
+  if (!rows.length) return '';
+
+  const maxTotal = Array.isArray(tab.maxPerSec)
+    ? tab.maxPerSec.reduce((a,b)=>a+b,0)
+    : tab.sections.length * tab.maxPerSec;
+
+  const totals = rows.map(r => {
+    let t=0;
+    tab.sections.forEach(s => { const v=parseFloat(r.scores[s]); if(!isNaN(v)) t+=v; });
+    return t;
+  });
+
+  const avg = totals.reduce((a,b)=>a+b,0)/totals.length;
+  const best = Math.max(...totals);
+  const worst = Math.min(...totals);
+
+  let html = `<div class="stats-row">
+    <div class="stat-card"><div class="sc-label">Tests Entered</div><div class="sc-val" style="color:var(--accent)">${rows.length}</div></div>
+    <div class="stat-card"><div class="sc-label">Avg Total</div><div class="sc-val" style="color:var(--amber-text)">${avg.toFixed(1)}</div></div>
+    <div class="stat-card"><div class="sc-label">Best Total</div><div class="sc-val" style="color:var(--green-text)">${best.toFixed(1)}</div></div>
+    <div class="stat-card"><div class="sc-label">Worst Total</div><div class="sc-val" style="color:var(--red-text)">${worst.toFixed(1)}</div></div>
+    <div class="stat-card"><div class="sc-label">Avg %</div><div class="sc-val" style="color:var(--text2)">${(avg/maxTotal*100).toFixed(1)}%</div></div>
+  </div>`;
+  return html;
+}
+
+function renderStatsRowSingle(tid, tab) {
+  const data = appData[tid];
+  const scores = data.rows.map(r=>parseFloat(r.scores['score'])).filter(v=>!isNaN(v));
+  if (!scores.length) return '';
+  const avg = scores.reduce((a,b)=>a+b,0)/scores.length;
+  return `<div class="stats-row">
+    <div class="stat-card"><div class="sc-label">Tests Entered</div><div class="sc-val" style="color:var(--accent)">${scores.length}</div></div>
+    <div class="stat-card"><div class="sc-label">Avg Score</div><div class="sc-val" style="color:var(--amber-text)">${avg.toFixed(1)}</div></div>
+    <div class="stat-card"><div class="sc-label">Best Score</div><div class="sc-val" style="color:var(--green-text)">${Math.max(...scores).toFixed(1)}</div></div>
+    <div class="stat-card"><div class="sc-label">Worst Score</div><div class="sc-val" style="color:var(--red-text)">${Math.min(...scores).toFixed(1)}</div></div>
+    <div class="stat-card"><div class="sc-label">Avg %</div><div class="sc-val" style="color:var(--text2)">${(avg/tab.max*100).toFixed(1)}%</div></div>
+  </div>`;
+}
+
+function renderWeaknessDetector(tid, tab) {
+  const data = appData[tid];
+  let subjects = [];
+
+  if (tab.type === 'multi') {
+    subjects = tab.sections.map(sec => {
+      const max = getMaxForSection(tab, sec);
+      const scores = data.rows.map(r=>parseFloat(r.scores[sec])).filter(v=>!isNaN(v));
+      const avg = scores.length ? scores.reduce((a,b)=>a+b,0)/scores.length : null;
+      const pct = avg !== null ? avg/max*100 : null;
+      return { sec, max, avg, pct };
+    });
+  } else {
+    const scores = data.rows.map(r=>parseFloat(r.scores['score'])).filter(v=>!isNaN(v));
+    const avg = scores.length ? scores.reduce((a,b)=>a+b,0)/scores.length : null;
+    const pct = avg !== null ? avg/tab.max*100 : null;
+    subjects = [{ sec: tab.subject, max: tab.max, avg, pct }];
+  }
+
+  const valid = subjects.filter(s=>s.pct!==null);
+  if (!valid.length) return '';
+
+  let html = `<div class="weakness-section"><h3>🔍 Weakness Detector</h3><div class="weakness-grid">`;
+  subjects.forEach(s => {
+    if (s.pct === null) return;
+    const level = s.pct >= 70 ? 'ok' : s.pct >= 50 ? 'warning' : 'danger';
+    const icon = level==='ok'?'✅':level==='warning'?'⚠️':'🚨';
+    const barColor = level==='ok'?'#22c55e':level==='warning'?'#f59e0b':'#ef4444';
+    html += `<div class="weakness-card ${level}">
+      <div class="wc-subject">${icon} ${s.sec}</div>
+      <div class="wc-bar-bg"><div class="wc-bar" style="width:${Math.min(s.pct,100).toFixed(1)}%;background:${barColor}"></div></div>
+      <div class="wc-stats">
+        <span>Avg: ${s.avg.toFixed(1)}/${s.max}</span>
+        <span>${s.pct.toFixed(1)}%</span>
+      </div>
+    </div>`;
+  });
+  html += `</div></div>`;
+  return html;
+}
+
+// ---- PARTIAL DOM UPDATERS (no re-render = no focus loss) ----
+
+function updateScoreInputStyle(inp, tid, tab) {
+  const rowId = inp.dataset.row;
+  const sec = inp.dataset.sec;
+  const dl = parseFloat(appData[tid].deadlines[sec]);
+  const v = parseFloat(inp.value);
+  const below = !isNaN(dl) && !isNaN(v) && v < dl;
+  inp.classList.toggle('score-below-deadline', below);
+}
+
+function updateRowTotal(trEl, tid, tab, row) {
+  const totalTd = trEl.querySelector('.total-cell');
+  if (!totalTd) return;
+  let total = 0, has = false;
+  const maxTotal = Array.isArray(tab.maxPerSec)
+    ? tab.maxPerSec.reduce((a,b)=>a+b,0)
+    : tab.sections.length * tab.maxPerSec;
+  (tab.sections || ['score']).forEach(sec => {
+    const v = parseFloat(row.scores[sec]);
+    if (!isNaN(v)) { total += v; has = true; }
+  });
+  if (tab.type === 'single') {
+    const v = parseFloat(row.scores['score']);
+    if (!isNaN(v)) { total = v; has = true; }
+  }
+  const pct = has ? total / maxTotal * 100 : null;
+  totalTd.textContent = has ? total.toFixed(2) : '—';
+  totalTd.className = 'total-cell' + (has ? (pct >= 60 ? ' total-good' : ' total-bad') : '');
+}
+
+function updatePercentileStyle(inp, tid) {
+  const pthr = appData[tid].pThreshold || 90;
+  const v = parseFloat(inp.value);
+  inp.classList.remove('percentile-good','percentile-bad');
+  if (!isNaN(v)) inp.classList.add(v >= pthr ? 'percentile-good' : 'percentile-bad');
+}
+
+function refreshStatsAndWeakness(tid, tab) {
+  const panel = document.getElementById('panel_'+tid);
+  if (!panel) return;
+  // Stats row
+  const statsEl = panel.querySelector('.stats-row');
+  const weakEl = panel.querySelector('.weakness-section');
+  const newStats = tab.type === 'multi' ? renderStatsRow(tid, tab) : renderStatsRowSingle(tid, tab);
+  const newWeak = renderWeaknessDetector(tid, tab);
+  if (statsEl) statsEl.outerHTML = newStats || statsEl.outerHTML;
+  else if (newStats) {
+    const dl = panel.querySelector('.deadline-card');
+    if (dl) dl.insertAdjacentHTML('afterend', newStats);
+  }
+  if (weakEl) weakEl.outerHTML = newWeak || '<span></span>';
+  else if (newWeak) panel.insertAdjacentHTML('beforeend', newWeak);
+}
+
+// ---- BIND EVENTS ----
+
+function bindEvents(tid, tab) {
+  const panel = document.getElementById('panel_'+tid);
+  if (!panel) return;
+
+  // Score inputs — update data + style only, NO full re-render
+  panel.querySelectorAll('.score-input[data-row]').forEach(inp => {
+    inp.addEventListener('input', () => {
+      const rowId = inp.dataset.row;
+      const sec = inp.dataset.sec;
+      const row = appData[tid].rows.find(r=>String(r.id)===String(rowId));
+      if (!row) return;
+      row.scores[sec] = inp.value;
+      saveData();
+      updateScoreInputStyle(inp, tid, tab);
+      const tr = inp.closest('tr');
+      if (tr) updateRowTotal(tr, tid, tab, row);
+      // Debounce stats/weakness refresh so it doesn't interrupt typing
+      clearTimeout(inp._statTimer);
+      inp._statTimer = setTimeout(() => refreshStatsAndWeakness(tid, tab), 600);
+    });
+  });
+
+  // Percentile — update style only, NO full re-render
+  panel.querySelectorAll('.percentile-input').forEach(inp => {
+    inp.addEventListener('input', () => {
+      const rowId = inp.dataset.row;
+      const row = appData[tid].rows.find(r=>String(r.id)===String(rowId));
+      if (!row) return;
+      row.percentile = inp.value;
+      saveData();
+      updatePercentileStyle(inp, tid);
+    });
+  });
+
+  // Deadlines — only re-render on blur (after user finishes typing)
+  panel.querySelectorAll('[data-deadline]').forEach(inp => {
+    inp.addEventListener('input', () => {
+      appData[tid].deadlines[inp.dataset.deadline] = inp.value;
+      saveData();
+    });
+    inp.addEventListener('change', () => {
+      appData[tid].deadlines[inp.dataset.deadline] = inp.value;
+      saveData();
+      // Update all score input colours for this section without re-render
+      panel.querySelectorAll(`.score-input[data-sec="${inp.dataset.deadline}"]`).forEach(si => {
+        updateScoreInputStyle(si, tid, tab);
+      });
+    });
+  });
+
+  // Percentile threshold — re-render on blur only
+  panel.querySelectorAll('[data-pthr]').forEach(inp => {
+    inp.addEventListener('input', () => {
+      appData[tid].pThreshold = parseFloat(inp.value) || 90;
+      saveData();
+    });
+    inp.addEventListener('change', () => {
+      appData[tid].pThreshold = parseFloat(inp.value) || 90;
+      saveData();
+      panel.querySelectorAll('.percentile-input').forEach(pi => updatePercentileStyle(pi, tid));
+    });
+  });
+
+  // Remarks — just save, no re-render needed at all
+  panel.querySelectorAll('.remark-input').forEach(ta => {
+    ta.addEventListener('input', () => {
+      const rowId = ta.dataset.row;
+      const row = appData[tid].rows.find(r=>String(r.id)===String(rowId));
+      if (!row) return;
+      row.remark = ta.value;
+      saveData();
+    });
+  });
+
+  // Color pick buttons
+  panel.querySelectorAll('[data-colorpick]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const rowId = btn.dataset.row;
+      const field = btn.dataset.colorpick;
+      showColorPalette(e.clientX, e.clientY, (color) => {
+        const row = appData[tid].rows.find(r=>String(r.id)===String(rowId));
+        if (!row) return;
+        if (field === 'remark') {
+          row.remarkBg = color;
+          const ta = panel.querySelector(`.remark-input[data-row="${rowId}"]`);
+          if (ta) ta.style.background = color;
+        }
+        saveData();
+      });
+    });
+  });
+
+  // Add row
+  const addBtn = panel.querySelector('[data-addrow]');
+  if (addBtn) {
+    addBtn.addEventListener('click', () => {
+      addRowData(tid, tab);
+      renderTab(tid);
+    });
+  }
+
+  // Delete row
+  panel.querySelectorAll('[data-delrow]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      deleteRow(btn.dataset.tid, parseFloat(btn.dataset.delrow));
+    });
+  });
+}
+
+// ---- COLOR PALETTE ----
+function showColorPalette(x, y, callback) {
+  const pal = document.getElementById('colorPalette');
+  pal.innerHTML = '';
+  PALETTE_HEX.forEach(c => {
+    const d = document.createElement('div');
+    d.className = 'palette-color';
+    d.style.background = c === 'transparent' ? 'repeating-linear-gradient(45deg,#333,#333 2px,#222 2px,#222 6px)' : c;
+    d.title = c;
+    d.onclick = () => {
+      callback(c);
+      pal.classList.remove('show');
+      activePaletteTarget = null;
+    };
+    pal.appendChild(d);
+  });
+
+  const vw = window.innerWidth, vh = window.innerHeight;
+  let left = x, top = y + 10;
+  if (left + 150 > vw) left = vw - 155;
+  if (top + 180 > vh) top = y - 140;
+  pal.style.left = left + 'px';
+  pal.style.top = top + 'px';
+  pal.classList.add('show');
+}
+
+document.addEventListener('click', (e) => {
+  const pal = document.getElementById('colorPalette');
+  if (!pal.contains(e.target) && !e.target.dataset.colorpick) {
+    pal.classList.remove('show');
+  }
+});
+
+// ---- INIT ----
+loadData();
+renderAllTabs();
+</script>
+</body>
+</html>
